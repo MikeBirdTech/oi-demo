@@ -1,0 +1,3 @@
+python-dotenv
+open-interpreter
+pandas
