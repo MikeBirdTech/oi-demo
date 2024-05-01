@@ -6,21 +6,37 @@ import pandas as pd
 
 # Load environment variables
 load_dotenv()
+operating_dir = os.getenv("OPERATING_DIRECTORY")
 
 # Initialize the interpreter and configure it
 interpreter.llm.model = os.getenv("LLM_MODEL")
 interpreter.llm.temperature = 0
 interpreter.llm.api_key = os.getenv("LLM_API_KEY")
-interpreter.llm.api_base = os.getenv("LLM_API_BASE")
-interpreter.llm.api_version = os.getenv("LLM_API_VERSION")
 interpreter.auto_run = True
 interpreter.llm.context_window = os.getenv("CONTEXT_WINDOW")
 interpreter.system_message = "You are Open Interpreter, a world-class programmer that can complete any goal by executing code. When you execute code, it will be executed **on the user's machine**. The user has given you **full and complete permission** to execute any code necessary to complete the task. Execute the code. "
-interpreter.custom_instructions = ""
+interpreter.custom_instructions = f"Save all outputs to {operating_dir}."
 
 
-def run_it(spreadsheet_path):
-    directory_path = os.path.dirname(spreadsheet_path) 
+def run_it(file_path):
+    # Load the spreadsheet
+    df = pd.read_excel(file_path)
+
+    # Capture column names once before the loop
+    column_names = df.columns
+
+    # Iterate through each row in the DataFrame
+    for index, row in df.iterrows():
+        # Assemble a single string from the row data
+        row_data_str = ", ".join(
+            [
+                f"{col_name}: {row[col_name]}"
+                for col_name in column_names
+                if pd.notna(row[col_name])
+            ]
+        )
+        response = interpreter.chat(row_data_str)
+        print(response)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
